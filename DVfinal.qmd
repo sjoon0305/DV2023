@@ -38,7 +38,7 @@ df.dayofweek=df.dayofweek.map({0:'월',1:'화',2:'수',3:'목',4:'금',5:'토',6
 df['dayofweek'] = pd.Categorical(df['dayofweek'], categories=['월', '화', '수', '목', '금', '토', '일'], ordered=True)
 ```
 
-# 데이터탐색
+# 기말고사 1 {orientation="columns" scrolling="true"}
 
 ```{python}
 #| title: 평균속력 시각화 
@@ -58,11 +58,6 @@ px.density_heatmap(
     height=300
 )
 ```
-
-# 시각화 {orientation="columns" scrolling="true"}
-
-## Column {width=50%}
-
 ```{python}
 #| title: 평균이동거리 시각화
 tidydata = df.pivot_table(
@@ -82,10 +77,12 @@ px.density_heatmap(
 )
 ```
 
-## Column {width=50%}
+# 기말고사 2 {orientation="columns" scrolling="true"}
+
+
 
 ```{python}
-#| title: 2018~2019년도 전기사용량 (서울)
+#| title: 속력별 경로 시각화
 pcol = ['pickup_datetime', 'pickup_longitude', 'pickup_latitude', 'pickup_hour']
 dcol = ['dropoff_datetime', 'dropoff_longitude', 'dropoff_latitude', 'dropoff_hour']
 def transform(df):
