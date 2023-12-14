@@ -1,0 +1,158 @@
+---
+title: "기말고사 예상문제"
+author: "유성준"
+format: dashboard
+execute: 
+  enabled: true
+  cache: false
+  freeze: false
+  error: true
+---
+
+```{python}
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.io as pio
+
+pd.options.plotting.backend = "plotly"
+pio.templates.default = "plotly_white"
+
+df = pd.read_csv("https://raw.githubusercontent.com/guebin/DV2023/main/posts/NYCTaxi.csv").assign(
+    log_trip_duration = lambda df: np.log(df.trip_duration),
+    pickup_datetime = lambda df: df.pickup_datetime.apply(pd.to_datetime),
+    dropoff_datetime = lambda df: df.dropoff_datetime.apply(pd.to_datetime),
+    dist = lambda df: np.sqrt((df.pickup_latitude-df.dropoff_latitude)**2 + (df.pickup_longitude-df.dropoff_longitude)**2),
+    #---#
+    vendor_id = lambda df: df.vendor_id.map({1:'A',2:'B'})
+).assign(
+    speed = lambda df: df.dist / df.trip_duration,
+    pickup_hour = lambda df: df.pickup_datetime.dt.hour,
+    dropoff_hour = lambda df: df.dropoff_datetime.dt.hour,
+    dayofweek = lambda df: df.pickup_datetime.dt.dayofweek
+)
+
+df_small = df[::100].reset_index(drop=True)
+
+df.dayofweek=df.dayofweek.map({0:'월',1:'화',2:'수',3:'목',4:'금',5:'토',6:'일'})
+df['dayofweek'] = pd.Categorical(df['dayofweek'], categories=['월', '화', '수', '목', '금', '토', '일'], ordered=True)
+```
+
+# 데이터탐색
+
+```{python}
+#| title: 평균속력 시각화 
+tidydata = df.pivot_table(
+    index = 'pickup_hour',
+    columns = 'dayofweek',
+    values = 'speed',
+    aggfunc = 'mean'
+).stack().reset_index().rename({0:'speed_mean'},axis=1)
+px.density_heatmap(
+    data_frame=tidydata,
+    x='pickup_hour',
+    y='dayofweek',
+    z='speed_mean',
+    nbinsx=24,
+    nbinsy=7,
+    height=300
+)
+```
+
+# 시각화 {orientation="columns" scrolling="true"}
+
+## Column {width=50%}
+
+```{python}
+#| title: 평균이동거리 시각화
+tidydata = df.pivot_table(
+    index = 'pickup_hour',
+    columns = 'dayofweek',
+    values = 'dist',
+    aggfunc = 'mean'
+).stack().reset_index().rename({0:'dist_mean'},axis=1)
+px.density_heatmap(
+    data_frame=tidydata,
+    x='pickup_hour',
+    y='dayofweek',
+    z='dist_mean',
+    nbinsx=24,
+    nbinsy=7,
+    height=300
+)
+```
+
+## Column {width=50%}
+
+```{python}
+#| title: 2018~2019년도 전기사용량 (서울)
+pcol = ['pickup_datetime', 'pickup_longitude', 'pickup_latitude', 'pickup_hour']
+dcol = ['dropoff_datetime', 'dropoff_longitude', 'dropoff_latitude', 'dropoff_hour']
+def transform(df):
+    pickup = df.loc[:,['id']+pcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'pickup')
+    dropoff = df.loc[:,['id']+dcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'dropoff')
+    return pd.concat([pickup,dropoff],axis=0)
+df_left = df_small.drop(pcol+dcol,axis=1)
+df_right = pd.concat([transform(df) for i, df in df_small.groupby('id')]).reset_index(drop=True)
+df_small = df_left.merge(df_right)
+
+df_small=df_small.assign( SpeedCut = pd.qcut(df_small.speed,4,labels=['매우느림','조금느림','조금빠름','매우빠름']))
+df_small['SpeedCut'] = pd.Categorical(df_small['SpeedCut'], categories=['매우느림','조금느림','조금빠름','매우빠름'], ordered=True)
+
+fig = px.line_mapbox(
+    data_frame=df_small,
+    lat = 'latitude',
+    lon = 'longitude',
+    color = 'SpeedCut',
+    line_group = 'id',
+    center = {'lat':40.7322, 'lon':-73.9052},
+    #---#
+    mapbox_style = 'carto-positron',
+    zoom=10,
+    width = 750,
+    height = 600    
+)
+scatter_data = px.scatter_mapbox(
+    data_frame=df_small,
+    lat = 'latitude',
+    lon = 'longitude',
+    size = 'passenger_count',
+    size_max = 10,
+    color = 'SpeedCut',
+    #---#
+    mapbox_style = 'carto-positron',
+    zoom=10,
+    width = 750,
+    height = 600    
+).data 
+for sd in scatter_data: 
+    fig.add_trace(sd)
+fig.update_traces(
+    line={
+        'width':1
+    },
+    opacity=0.8
+)    
+fig.show(config={'scrollZoom':False})
+```
+
+```{python}
+#| title: 2018~2019년도 에너지사용량 (전국)
+fig = df2.drop(['code_local','code'],axis=1)\
+.set_index(['년도','시도','지역','건물동수','연면적']).stack().reset_index()\
+.rename({'level_5':'에너지종류', 0:'에너지사용량'},axis=1)\
+.assign(에너지종류 = lambda df: df['에너지종류'].str.split('/').str[-1])\
+.groupby(['년도','시도','에너지종류']).agg({'에너지사용량':'sum'})\
+.stack().reset_index()\
+.rename({0:'에너지사용량'},axis=1)\
+.plot.area(
+    x='년도',y='에너지사용량',
+    color='시도',
+    facet_col='에너지종류'
+)
+fig.update_layout(
+    xaxis_domain=[0.0, 0.25],
+    xaxis2_domain=[0.35, 0.60],
+    xaxis3_domain=[0.70, 0.95]
+)
+```
