@@ -36,10 +36,24 @@ df_small = df[::100].reset_index(drop=True)
 
 df.dayofweek=df.dayofweek.map({0:'월',1:'화',2:'수',3:'목',4:'금',5:'토',6:'일'})
 df['dayofweek'] = pd.Categorical(df['dayofweek'], categories=['월', '화', '수', '목', '금', '토', '일'], ordered=True)
+
+pcol = ['pickup_datetime', 'pickup_longitude', 'pickup_latitude', 'pickup_hour']
+dcol = ['dropoff_datetime', 'dropoff_longitude', 'dropoff_latitude', 'dropoff_hour']
+def transform(df):
+    pickup = df.loc[:,['id']+pcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'pickup')
+    dropoff = df.loc[:,['id']+dcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'dropoff')
+    return pd.concat([pickup,dropoff],axis=0)
+df_left = df_small.drop(pcol+dcol,axis=1)
+df_right = pd.concat([transform(df) for i, df in df_small.groupby('id')]).reset_index(drop=True)
+df_small = df_left.merge(df_right)
+
+df_small=df_small.assign( SpeedCut = pd.qcut(df_small.speed,4,labels=['매우느림','조금느림','조금빠름','매우빠름']))
+df_small['SpeedCut'] = pd.Categorical(df_small['SpeedCut'], categories=['매우느림','조금느림','조금빠름','매우빠름'], ordered=True)
 ```
 
 # 기말고사 1 {orientation="columns" scrolling="true"}
 
+## Column {width=100%}
 ```{python}
 #| title: 평균속력 시각화 
 tidydata = df.pivot_table(
@@ -77,24 +91,12 @@ px.density_heatmap(
 )
 ```
 
-# 기말고사 2 {orientation="columns" scrolling="true"}
+# 기말고사 2
 
 
 
 ```{python}
 #| title: 속력별 경로 시각화
-pcol = ['pickup_datetime', 'pickup_longitude', 'pickup_latitude', 'pickup_hour']
-dcol = ['dropoff_datetime', 'dropoff_longitude', 'dropoff_latitude', 'dropoff_hour']
-def transform(df):
-    pickup = df.loc[:,['id']+pcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'pickup')
-    dropoff = df.loc[:,['id']+dcol].set_axis(['id', 'datetime', 'longitude', 'latitude', 'hour'],axis=1).assign(type = 'dropoff')
-    return pd.concat([pickup,dropoff],axis=0)
-df_left = df_small.drop(pcol+dcol,axis=1)
-df_right = pd.concat([transform(df) for i, df in df_small.groupby('id')]).reset_index(drop=True)
-df_small = df_left.merge(df_right)
-
-df_small=df_small.assign( SpeedCut = pd.qcut(df_small.speed,4,labels=['매우느림','조금느림','조금빠름','매우빠름']))
-df_small['SpeedCut'] = pd.Categorical(df_small['SpeedCut'], categories=['매우느림','조금느림','조금빠름','매우빠름'], ordered=True)
 
 fig = px.line_mapbox(
     data_frame=df_small,
