@@ -133,6 +133,5 @@ fig.update_traces(
     },
     opacity=0.8
 ) 
-fig.show(config={'scrollZoom':False})
 ```
 
