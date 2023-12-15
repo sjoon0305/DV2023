@@ -50,6 +50,54 @@ df_small = df_left.merge(df_right)
 df_small=df_small.assign( SpeedCut = pd.qcut(df_small.speed,4,labels=['매우느림','조금느림','조금빠름','매우빠름']))
 df_small['SpeedCut'] = pd.Categorical(df_small['SpeedCut'], categories=['매우느림','조금느림','조금빠름','매우빠름'], ordered=True)
 
+```
+
+# 기말고사 1 {orientation="columns" scrolling="true"}
+
+## Column {width=100%}
+```{python}
+#| title: 평균속력 시각화 
+tidydata = df.pivot_table(
+    index = 'pickup_hour',
+    columns = 'dayofweek',
+    values = 'speed',
+    aggfunc = 'mean'
+).stack().reset_index().rename({0:'speed_mean'},axis=1)
+px.density_heatmap(
+    data_frame=tidydata,
+    x='pickup_hour',
+    y='dayofweek',
+    z='speed_mean',
+    nbinsx=24,
+    nbinsy=7,
+    height=300
+)
+```
+
+```{python}
+#| title: 평균이동거리 시각화
+tidydata = df.pivot_table(
+    index = 'pickup_hour',
+    columns = 'dayofweek',
+    values = 'dist',
+    aggfunc = 'mean'
+).stack().reset_index().rename({0:'dist_mean'},axis=1)
+px.density_heatmap(
+    data_frame=tidydata,
+    x='pickup_hour',
+    y='dayofweek',
+    z='dist_mean',
+    nbinsx=24,
+    nbinsy=7,
+    height=300
+)
+```
+
+# 기말고사 2
+
+
+```{python}
+#| title: 속력별 경로 시각화
 fig = px.line_mapbox(
     data_frame=df_small,
     lat = 'latitude',
@@ -76,56 +124,7 @@ scatter_data = px.scatter_mapbox(
     width = 750,
     height = 600    
 ).data 
-for sd in scatter_data: 
-    fig.add_trace(sd)
-```
 
-# 기말고사 1 {orientation="columns" scrolling="true"}
-
-## Column {width=100%}
-```{python}
-#| title: 평균속력 시각화 
-tidydata = df.pivot_table(
-    index = 'pickup_hour',
-    columns = 'dayofweek',
-    values = 'speed',
-    aggfunc = 'mean'
-).stack().reset_index().rename({0:'speed_mean'},axis=1)
-px.density_heatmap(
-    data_frame=tidydata,
-    x='pickup_hour',
-    y='dayofweek',
-    z='speed_mean',
-    nbinsx=24,
-    nbinsy=7,
-    height=300
-)
-```
-```{python}
-#| title: 평균이동거리 시각화
-tidydata = df.pivot_table(
-    index = 'pickup_hour',
-    columns = 'dayofweek',
-    values = 'dist',
-    aggfunc = 'mean'
-).stack().reset_index().rename({0:'dist_mean'},axis=1)
-px.density_heatmap(
-    data_frame=tidydata,
-    x='pickup_hour',
-    y='dayofweek',
-    z='dist_mean',
-    nbinsx=24,
-    nbinsy=7,
-    height=300
-)
-```
-
-# 기말고사 2
-
-
-
-```{python}
-#| title: 속력별 경로 시각화
 
 fig.update_traces(
     line={
