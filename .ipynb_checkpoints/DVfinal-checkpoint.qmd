@@ -135,7 +135,7 @@ fig3 = fig.update_layout(legend_title_text='평균속력').update_traces(
 
 # 기말고사1-(1),(2)
 
-## 
+## Column {width=100%}
 ```{python}
 #| title: 평균속력 시각화 
 fig1.show()
