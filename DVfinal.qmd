@@ -123,12 +123,17 @@ scatter_data = px.scatter_mapbox(
 for sd in scatter_data: 
     fig.add_trace(sd)
 
-fig3 = fig.update_layout(legend_title_text='평균속력').update_traces(
+fig3 = fig.update_layout(
+    legend_title_text='평균속력',
+    width = 1400,
+    height= 650    
+).update_traces(
     line={
         'width':1
     },
     opacity=0.8
 ) 
+
 
 
 ```
