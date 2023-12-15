@@ -147,7 +147,7 @@ fig1.show()
 fig2.show()
 ```
 
-# 기말고사1-(3)
+# 기말고사1-(3) {orientation="columns" scrolling="true"}
 
 
 ```{python}
