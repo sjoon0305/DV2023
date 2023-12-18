@@ -1,6 +1,6 @@
 ---
 title: "NYCTaxi"
-author: "유성준(201810648)"
+author: "유성준"
 format: dashboard
 execute: 
   enabled: true
